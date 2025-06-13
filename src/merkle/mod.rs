@@ -1,16 +1,16 @@
 mod merkletree;
 mod node;
 
-#[cfg(test)]
+#[cfg(all(test, feature = "sha256"))]
 mod tests {
-    use crate::hasher::DefaultHasher;
+    use crate::hasher::SHA256Hasher;
 
     use super::*;
 
     #[test]
     fn test_merkle_tree_hashing() {
         let data = vec!["a", "b", "c", "d"];
-        let tree = merkletree::MerkleTree::new(&DefaultHasher, data);
+        let tree = merkletree::MerkleTree::new(&SHA256Hasher, data);
 
         assert_eq!(tree.height(), 3);
 
@@ -23,7 +23,7 @@ mod tests {
     #[test]
     fn test_merkle_tree_single_leaf() {
         let data = vec!["hello"];
-        let tree = merkletree::MerkleTree::new(&DefaultHasher, data);
+        let tree = merkletree::MerkleTree::new(&SHA256Hasher, data);
 
         assert_eq!(tree.height(), 2);
         assert_eq!(tree.len(), 2);

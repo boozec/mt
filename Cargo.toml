@@ -5,5 +5,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-hex = "0.4.3"
-sha2 = "0.10.9"
+hex = { version = "0.4.3", optional = true }
+sha2 = { version = "0.10.9", optional = true }
+
+[features]
+default = []
+sha256 = ["sha2", "hex"]
