@@ -1,20 +1,20 @@
 use crate::hasher::Hasher;
 
 #[derive(Debug, Clone)]
-enum NodeType {
+pub enum NodeType {
     Leaf,
     Internal(Box<Node>, Box<Node>),
 }
 
 impl NodeType {
-    pub fn left(&self) -> Option<&Box<Node>> {
+    pub fn left(&self) -> Option<&Node> {
         match self {
             NodeType::Leaf => None,
             NodeType::Internal(l, _) => Some(l),
         }
     }
 
-    pub fn right(&self) -> Option<&Box<Node>> {
+    pub fn right(&self) -> Option<&Node> {
         match self {
             NodeType::Leaf => None,
             NodeType::Internal(_, r) => Some(r),
