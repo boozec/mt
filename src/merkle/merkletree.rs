@@ -2,7 +2,7 @@ use crate::{hasher::Hasher, merkle::node::Node};
 
 #[derive(Debug)]
 pub struct MerkleTree {
-    leafs: Vec<Node>,
+    leaves: Vec<Node>,
     height: usize,
     root: Node,
 }
@@ -14,19 +14,19 @@ impl MerkleTree {
             "Merkle Tree requires at least one element"
         );
 
-        let mut leafs: Vec<Node> = data
+        let mut leaves: Vec<Node> = data
             .into_iter()
             .map(|x| Node::new_leaf(hasher, x))
             .collect();
-        if leafs.len() % 2 != 0 {
-            leafs.push(leafs[leafs.len() - 1].clone());
+        if leaves.len() % 2 != 0 {
+            leaves.push(leaves[leaves.len() - 1].clone());
         }
 
-        Self::build(hasher, leafs)
+        Self::build(hasher, leaves)
     }
 
     fn build(hasher: &dyn Hasher, mut nodes: Vec<Node>) -> Self {
-        let leafs = nodes.clone();
+        let leaves = nodes.clone();
         let mut height = 0;
 
         while nodes.len() > 1 {
@@ -42,7 +42,7 @@ impl MerkleTree {
         let root = nodes.remove(0);
 
         MerkleTree {
-            leafs,
+            leaves,
             height: height + 1,
             root,
         }
@@ -53,7 +53,7 @@ impl MerkleTree {
     }
 
     pub fn len(&self) -> usize {
-        self.leafs.len()
+        self.leaves.len()
     }
 
     pub fn root(&self) -> Node {
