@@ -1,3 +1,7 @@
+//! High-level module for Merkle tree functionality.
+//!
+//! Re-exports the Merkle tree and node modules for external use.
+
 pub mod merkletree;
 pub mod node;
 
@@ -13,7 +17,6 @@ mod tests {
         let tree = merkletree::MerkleTree::new(&DefaultHasher, data);
 
         assert_eq!(tree.height(), 3);
-
         assert_eq!(tree.root().hash(), "0xc0ff3");
     }
 
@@ -24,7 +27,6 @@ mod tests {
         let tree = merkletree::MerkleTree::new(&SHA256Hasher, data);
 
         assert_eq!(tree.height(), 3);
-
         assert_eq!(
             tree.root().hash(),
             "58c89d709329eb37285837b042ab6ff72c7c8f74de0446b091b6a0131c102cfd"
