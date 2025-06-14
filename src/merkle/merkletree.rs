@@ -32,12 +32,7 @@ impl MerkleTree {
         while nodes.len() > 1 {
             let mut next_level = Vec::new();
             for pair in nodes.chunks(2) {
-                let left = pair[0].clone();
-                let right = if pair.len() == 2 {
-                    pair[1].clone()
-                } else {
-                    left.clone()
-                };
+                let (left, right) = (pair[0].clone(), pair[1].clone());
                 next_level.push(Node::new_internal(hasher, left, right));
             }
             nodes = next_level;
