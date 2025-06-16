@@ -34,14 +34,21 @@ impl MerkleTree {
     ///
     /// If the number of leaf nodes is odd, the last node is duplicated to ensure all internal
     /// nodes have exactly two children.
-    pub fn new<T: ToString>(hasher: &dyn Hasher, data: Vec<T>) -> Self {
+    pub fn new<I, T>(hasher: &dyn Hasher, data: I) -> Self
+    where
+        I: IntoIterator<Item = T>,
+        T: AsRef<[u8]>,
+    {
+        let owned_data: Vec<T> = data.into_iter().collect();
+        let data_slices: Vec<&[u8]> = owned_data.iter().map(|item| item.as_ref()).collect();
+
         assert!(
-            !data.is_empty(),
+            !data_slices.is_empty(),
             "Merkle Tree requires at least one element"
         );
 
-        let mut leaves: Vec<Node> = data
-            .into_iter()
+        let mut leaves: Vec<Node> = data_slices
+            .iter()
             .map(|x| Node::new_leaf(hasher, x))
             .collect();
 
@@ -58,9 +65,15 @@ impl MerkleTree {
         let mut height = 0;
 
         while nodes.len() > 1 {
+            if nodes.len() % 2 != 0 {
+                // duplicate last node to make the count even
+                nodes.push(nodes[nodes.len() - 1].clone());
+            }
+
             let mut next_level = Vec::new();
             for pair in nodes.chunks(2) {
                 let (left, right) = (pair[0].clone(), pair[1].clone());
+
                 next_level.push(Node::new_internal(hasher, left, right));
             }
             nodes = next_level;

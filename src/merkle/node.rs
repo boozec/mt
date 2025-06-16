@@ -36,6 +36,8 @@ pub struct Node {
     hash: String,
     /// Type of the node: leaf or internal.
     kind: NodeType,
+    /// Data in bytes.
+    data: Vec<u8>,
 }
 
 impl Node {
@@ -45,10 +47,11 @@ impl Node {
     ///
     /// * `hasher` - A reference to a hashing strategy.
     /// * `data` - The data to be hashed and stored as a leaf.
-    pub fn new_leaf<T: ToString>(hasher: &dyn Hasher, data: T) -> Self {
-        let hash = hasher.hash(&data.to_string());
+    pub fn new_leaf(hasher: &dyn Hasher, data: &[u8]) -> Self {
+        let hash = hasher.hash(&data);
         Self {
             hash,
+            data: data.to_vec(),
             kind: NodeType::Leaf,
         }
     }
@@ -65,10 +68,13 @@ impl Node {
     ///
     /// The internal node hash is computed as the hash of the concatenated children's hashes.
     pub fn new_internal(hasher: &dyn Hasher, left: Node, right: Node) -> Self {
-        let combined = format!("{}{}", left.hash, right.hash);
-        let hash = hasher.hash(&combined);
+        let mut buffer = Vec::<u8>::new();
+        buffer.extend_from_slice(left.hash().as_bytes());
+        buffer.extend_from_slice(right.hash().as_bytes());
+        let hash = hasher.hash(&buffer);
         Self {
             hash,
+            data: buffer,
             kind: NodeType::Internal(Box::new(left), Box::new(right)),
         }
     }
@@ -76,6 +82,11 @@ impl Node {
     /// Returns a reference to the hash of the node.
     pub fn hash(&self) -> &str {
         &self.hash
+    }
+
+    /// Returns the data value in bytes format.
+    pub fn data(&self) -> &[u8] {
+        &self.data
     }
 
     /// Returns a reference to the node's type (leaf or internal).
