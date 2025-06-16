@@ -111,6 +111,11 @@ impl MerkleTree {
         self.leaves.len()
     }
 
+    /// Returns the tree' leaves.
+    pub fn leaves(&self) -> Vec<Node> {
+        self.leaves.clone()
+    }
+
     /// Returns the root node of the tree.
     pub fn root(&self) -> Node {
         self.root.clone()
@@ -121,7 +126,6 @@ impl MerkleTree {
 mod tests {
     use super::*;
     use crate::hasher::*;
-    use crate::proof::*;
 
     #[test]
     fn test_merkle_tree_with_default_hasher() {
@@ -129,7 +133,7 @@ mod tests {
         let tree = MerkleTree::new(DummyHasher, data);
 
         assert_eq!(tree.height(), 2);
-        assert_eq!(tree.root().hash(), "0xc0ff3");
+        assert_eq!(tree.root().hash(), "hash_539");
     }
 
     #[test]
@@ -177,33 +181,5 @@ mod tests {
             tree.root().hash(),
             "9da1ff0dfa79217bdbea9ec96407b1e693646cc493f64059fa27182a37cadf94"
         );
-    }
-
-    #[test]
-    fn test_proof_generation_and_verification_dummy() {
-        let hasher = DummyHasher;
-        let data = vec!["a", "b", "c", "d"];
-        let tree = MerkleTree::new(hasher.clone(), data.clone());
-        let proofer = DefaultProofer::new(hasher.clone(), tree.leaves.clone());
-
-        for (index, item) in data.iter().enumerate() {
-            let proof = proofer.generate(index).unwrap();
-
-            assert!(proofer.verify(&proof, item, tree.root().hash(), &hasher));
-        }
-    }
-    #[test]
-    #[cfg(feature = "sha256")]
-    fn test_proof_generation_and_verification_sha256() {
-        let hasher = SHA256Hasher::new();
-        let data = vec!["a", "b", "c", "d"];
-        let tree = MerkleTree::new(hasher.clone(), data.clone());
-        let proofer = DefaultProofer::new(hasher.clone(), tree.leaves.clone());
-
-        for (index, item) in data.iter().enumerate() {
-            let proof = proofer.generate(index).unwrap();
-
-            assert!(proofer.verify(&proof, item, tree.root().hash(), &hasher));
-        }
     }
 }

@@ -15,8 +15,9 @@ pub trait Hasher {
 pub struct DummyHasher;
 
 impl Hasher for DummyHasher {
-    fn hash(&self, _input: &[u8]) -> String {
-        "0xc0ff3".to_string()
+    fn hash(&self, input: &[u8]) -> String {
+        let sum: u32 = input.iter().map(|&b| b as u32).sum();
+        format!("hash_{:x}", sum)
     }
 }
 

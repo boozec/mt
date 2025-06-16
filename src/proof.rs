@@ -58,21 +58,18 @@ pub trait Proofer {
         T: AsRef<[u8]>;
 }
 
-pub struct DefaultProofer {
-    hasher: Box<dyn Hasher>,
+pub struct DefaultProofer<'a> {
+    hasher: &'a dyn Hasher,
     leaves: Vec<Node>,
 }
 
-impl DefaultProofer {
-    pub fn new<H: Hasher + 'static>(hasher: H, leaves: Vec<Node>) -> Self {
-        Self {
-            hasher: Box::new(hasher),
-            leaves,
-        }
+impl<'a> DefaultProofer<'a> {
+    pub fn new(hasher: &'a dyn Hasher, leaves: Vec<Node>) -> Self {
+        Self { hasher, leaves }
     }
 }
 
-impl Proofer for DefaultProofer {
+impl Proofer for DefaultProofer<'_> {
     fn generate(&self, index: usize) -> Option<MerkleProof> {
         if index >= self.leaves.len() {
             return None;
@@ -146,5 +143,41 @@ impl Proofer for DefaultProofer {
 
         // Check if the computed root matches the expected root
         current_hash == root_hash
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{hasher::*, merkletree::MerkleTree};
+
+    use super::*;
+
+    #[test]
+    fn test_proof_generation_and_verification_dummy() {
+        let hasher = DummyHasher;
+        let data = vec!["a", "b", "c", "d"];
+        let tree = MerkleTree::new(hasher.clone(), data.clone());
+        let proofer = DefaultProofer::new(&hasher, tree.leaves());
+
+        for (index, item) in data.iter().enumerate() {
+            let proof = proofer.generate(index).unwrap();
+
+            assert!(proofer.verify(&proof, item, tree.root().hash(), &hasher));
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "sha256")]
+    fn test_proof_generation_and_verification_sha256() {
+        let hasher = SHA256Hasher::new();
+        let data = vec!["a", "b", "c", "d"];
+        let tree = MerkleTree::new(hasher.clone(), data.clone());
+        let proofer = DefaultProofer::new(&hasher, tree.leaves().clone());
+
+        for (index, item) in data.iter().enumerate() {
+            let proof = proofer.generate(index).unwrap();
+
+            assert!(proofer.verify(&proof, item, tree.root().hash(), &hasher));
+        }
     }
 }
