@@ -48,7 +48,7 @@ impl Node {
     /// * `hasher` - A reference to a hashing strategy.
     /// * `data` - The data to be hashed and stored as a leaf.
     pub fn new_leaf(hasher: &dyn Hasher, data: &[u8]) -> Self {
-        let hash = hasher.hash(&data);
+        let hash = hasher.hash(data);
         Self {
             hash,
             data: data.to_vec(),

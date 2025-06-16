@@ -14,7 +14,7 @@ mod tests {
     #[test]
     fn test_merkle_tree_with_default_hasher() {
         let data = &["hello".as_bytes(), "world".as_bytes()];
-        let tree = merkletree::MerkleTree::new(&DefaultHasher, data);
+        let tree = merkletree::MerkleTree::new(&DummyHasher, data);
 
         assert_eq!(tree.height(), 2);
         assert_eq!(tree.root().hash(), "0xc0ff3");

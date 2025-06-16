@@ -14,9 +14,9 @@ pub trait Hasher {
 /// A dummy hasher used for testing or demonstration purposes.
 ///
 /// Always returns a static hash value.
-pub struct DefaultHasher;
+pub struct DummyHasher;
 
-impl Hasher for DefaultHasher {
+impl Hasher for DummyHasher {
     fn hash(&self, _input: &[u8]) -> String {
         "0xc0ff3".to_string()
     }
