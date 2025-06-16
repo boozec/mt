@@ -1,15 +1,9 @@
 //! Merkle tree proof and verification implementation
 
-use crate::{hasher::Hasher, node::Node};
-
-/// Enum representing the type of the node child.
-#[derive(Debug, Clone)]
-pub enum NodeChildType {
-    /// Left child
-    Left,
-    /// Right child
-    Right,
-}
+use crate::{
+    hasher::Hasher,
+    node::{Node, NodeChildType},
+};
 
 /// Represents a single step in a Merkle proof path.
 #[derive(Debug, Clone)]

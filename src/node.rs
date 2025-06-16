@@ -1,5 +1,14 @@
 //! Contains node definitions for Merkle trees, including leaf and internal node structures.
 
+/// Enum representing the type of the node child.
+#[derive(Debug, Clone)]
+pub enum NodeChildType {
+    /// Left child
+    Left,
+    /// Right child
+    Right,
+}
+
 /// Enum representing the type of a Merkle tree node.
 #[derive(Clone)]
 pub enum NodeStatus {
