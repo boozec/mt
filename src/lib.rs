@@ -2,4 +2,5 @@
 //! with pluggable hash functions.
 
 pub mod hasher;
-pub mod merkle;
+pub mod merkletree;
+pub mod node;
