@@ -137,7 +137,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "sha256")]
     fn test_merkle_tree_hashing() {
         let data = &["hello".as_bytes(), "world".as_bytes()];
         let tree = MerkleTree::new(SHA256Hasher::new(), data);
@@ -150,7 +149,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "sha256")]
     fn test_merkle_tree_single_leaf() {
         let data = &["hello".as_bytes()];
         let tree = MerkleTree::new(SHA256Hasher::new(), data);
@@ -164,7 +162,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "sha256")]
     fn test_merkle_tree_with_10_elements() {
         let inputs = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"];
         let data: Vec<&[u8]> = inputs.iter().map(|s| s.as_bytes()).collect();

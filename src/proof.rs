@@ -167,7 +167,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "sha256")]
     fn test_proof_generation_and_verification_sha256() {
         let hasher = SHA256Hasher::new();
         let data = vec!["a", "b", "c", "d"];
