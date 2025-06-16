@@ -1,9 +1,7 @@
 //! Contains node definitions for Merkle trees, including leaf and internal node structures.
 
-use crate::hasher::Hasher;
-
 /// Enum representing the type of a Merkle tree node.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum NodeType {
     /// A leaf node that contains no children.
     Leaf,
@@ -30,7 +28,7 @@ impl NodeType {
 }
 
 /// Represents a node in a Merkle tree, either leaf or internal.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Node {
     /// Hash value stored at the node.
     hash: String,
@@ -47,8 +45,7 @@ impl Node {
     ///
     /// * `hasher` - A reference to a hashing strategy.
     /// * `data` - The data to be hashed and stored as a leaf.
-    pub fn new_leaf(hasher: &dyn Hasher, data: &[u8]) -> Self {
-        let hash = hasher.hash(data);
+    pub fn new_leaf(data: &[u8], hash: String) -> Self {
         Self {
             hash,
             data: data.to_vec(),
@@ -67,14 +64,10 @@ impl Node {
     /// # Behavior
     ///
     /// The internal node hash is computed as the hash of the concatenated children's hashes.
-    pub fn new_internal(hasher: &dyn Hasher, left: Node, right: Node) -> Self {
-        let mut buffer = Vec::<u8>::new();
-        buffer.extend_from_slice(left.hash().as_bytes());
-        buffer.extend_from_slice(right.hash().as_bytes());
-        let hash = hasher.hash(&buffer);
+    pub fn new_internal(data: &[u8], hash: String, left: Node, right: Node) -> Self {
         Self {
             hash,
-            data: buffer,
+            data: data.to_vec(),
             kind: NodeType::Internal(Box::new(left), Box::new(right)),
         }
     }

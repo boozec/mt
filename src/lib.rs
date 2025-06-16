@@ -4,3 +4,4 @@
 pub mod hasher;
 pub mod merkletree;
 pub mod node;
+pub mod proof;
