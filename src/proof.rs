@@ -2,21 +2,30 @@
 
 use crate::{hasher::Hasher, node::Node};
 
-/// Represents a single step in a Merkle proof path
+/// Enum representing the type of the node child.
 #[derive(Debug, Clone)]
-pub struct ProofNode {
-    /// The hash value of the sibling node
-    pub hash: String,
-    /// Whether this sibling is on the left (true) or right (false) side
-    pub is_left: bool,
+pub enum NodeChildType {
+    /// Left child
+    Left,
+    /// Right child
+    Right,
 }
 
-/// A Merkle proof containing the path from a leaf to the root
+/// Represents a single step in a Merkle proof path.
+#[derive(Debug, Clone)]
+pub struct ProofNode {
+    /// The hash value of the sibling node.
+    pub hash: String,
+    /// Whether this sibling is left or right
+    pub child_type: NodeChildType,
+}
+
+/// A Merkle proof containing the path from a leaf to the root.
 #[derive(Debug)]
 pub struct MerkleProof {
-    /// The sequence of sibling hashes needed to reconstruct the path to root
+    /// The sequence of sibling hashes needed to reconstruct the path to root.
     pub path: Vec<ProofNode>,
-    /// The index of the leaf node this proof corresponds to
+    /// The index of the leaf node this proof corresponds.
     pub leaf_index: usize,
 }
 
@@ -25,14 +34,14 @@ pub trait Proofer {
     ///
     /// # Arguments
     ///
-    /// * `index` - The index of the leaf node to generate a proof for
+    /// * `index` - The index of the leaf node to generate a proof.
     ///
     /// # Returns
     ///
-    /// `Some(MerkleProof)` if the index is valid, `None` otherwise
+    /// `Some(MerkleProof)` if the index is valid, `None` otherwise.
     fn generate(&self, index: usize) -> Option<MerkleProof>;
 
-    /// Verifies that a piece of data exists in the tree using a Merkle proof/
+    /// Verifies that a piece of data exists in the tree using a Merkle proof.
     ///
     /// # Arguments
     ///
@@ -43,7 +52,7 @@ pub trait Proofer {
     ///
     /// # Returns
     ///
-    /// `true` if the proof is valid and the data exists in the tree, `false` otherwise
+    /// `true` if the proof is valid and the data exists in the tree, `false` otherwise.
     fn verify<T>(&self, proof: &MerkleProof, data: T, root_hash: &str, hasher: &dyn Hasher) -> bool
     where
         T: AsRef<[u8]>;
@@ -55,7 +64,7 @@ pub struct DefaultProofer {
 }
 
 impl DefaultProofer {
-    pub fn new<T: Hasher + 'static>(hasher: T, leaves: Vec<Node>) -> Self {
+    pub fn new<H: Hasher + 'static>(hasher: H, leaves: Vec<Node>) -> Self {
         Self {
             hasher: Box::new(hasher),
             leaves,
@@ -87,10 +96,15 @@ impl Proofer for DefaultProofer {
                 current_index - 1 // Left sibling
             };
 
-            let is_left = sibling_index < current_index;
+            let child_type = if sibling_index < current_index {
+                NodeChildType::Left
+            } else {
+                NodeChildType::Right
+            };
+
             path.push(ProofNode {
                 hash: current_level[sibling_index].hash().to_string(),
-                is_left,
+                child_type,
             });
 
             // Move to the next level
@@ -123,15 +137,11 @@ impl Proofer for DefaultProofer {
 
         // Walk up the tree using the proof path
         for proof_node in &proof.path {
-            current_hash = if proof_node.is_left {
-                // Sibling is on the left, current node is on the right
-                let combined = format!("{}{}", proof_node.hash, current_hash);
-                hasher.hash(combined.as_bytes())
-            } else {
-                // Sibling is on the right, current node is on the left
-                let combined = format!("{}{}", current_hash, proof_node.hash,);
-                hasher.hash(combined.as_bytes())
+            let combined: String = match proof_node.child_type {
+                NodeChildType::Left => format!("{}{}", proof_node.hash, current_hash),
+                NodeChildType::Right => format!("{}{}", current_hash, proof_node.hash),
             };
+            current_hash = hasher.hash(combined.as_bytes());
         }
 
         // Check if the computed root matches the expected root

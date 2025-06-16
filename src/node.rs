@@ -2,27 +2,27 @@
 
 /// Enum representing the type of a Merkle tree node.
 #[derive(Clone)]
-pub enum NodeType {
+pub enum NodeStatus {
     /// A leaf node that contains no children.
     Leaf,
     /// An internal node that has two children.
     Internal(Box<Node>, Box<Node>),
 }
 
-impl NodeType {
+impl NodeStatus {
     /// Returns a reference to the left child if the node is internal.
     pub fn left(&self) -> Option<&Node> {
         match self {
-            NodeType::Leaf => None,
-            NodeType::Internal(l, _) => Some(l),
+            NodeStatus::Leaf => None,
+            NodeStatus::Internal(l, _) => Some(l),
         }
     }
 
     /// Returns a reference to the right child if the node is internal.
     pub fn right(&self) -> Option<&Node> {
         match self {
-            NodeType::Leaf => None,
-            NodeType::Internal(_, r) => Some(r),
+            NodeStatus::Leaf => None,
+            NodeStatus::Internal(_, r) => Some(r),
         }
     }
 }
@@ -33,7 +33,7 @@ pub struct Node {
     /// Hash value stored at the node.
     hash: String,
     /// Type of the node: leaf or internal.
-    kind: NodeType,
+    status: NodeStatus,
     /// Data in bytes.
     data: Vec<u8>,
 }
@@ -49,7 +49,7 @@ impl Node {
         Self {
             hash,
             data: data.to_vec(),
-            kind: NodeType::Leaf,
+            status: NodeStatus::Leaf,
         }
     }
 
@@ -68,7 +68,7 @@ impl Node {
         Self {
             hash,
             data: data.to_vec(),
-            kind: NodeType::Internal(Box::new(left), Box::new(right)),
+            status: NodeStatus::Internal(Box::new(left), Box::new(right)),
         }
     }
 
@@ -83,7 +83,7 @@ impl Node {
     }
 
     /// Returns a reference to the node's type (leaf or internal).
-    pub fn kind(&self) -> &NodeType {
-        &self.kind
+    pub fn status(&self) -> &NodeStatus {
+        &self.status
     }
 }
