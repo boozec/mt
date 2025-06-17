@@ -1,0 +1,99 @@
+use criterion::{Criterion, criterion_group, criterion_main};
+use mt_rs::{
+    hasher::SHA256Hasher,
+    merkletree::MerkleTree,
+    proof::{DefaultProofer, Proofer},
+};
+use rand::{RngCore, rngs::OsRng};
+use std::fs::{self, File};
+use std::io::{BufWriter, Write};
+use std::path::Path;
+
+// Create files `filenames` with random data with a size of `size` MB.
+fn setup_files(filenames: Vec<&str>, size: usize) -> std::io::Result<Vec<Vec<u8>>> {
+    for filename in filenames.iter() {
+        if !Path::new(filename).exists() {
+            let file = File::create(filename)?;
+            let mut writer = BufWriter::new(file);
+
+            let mut buffer = vec![0u8; 1024 * 1024]; // 1 MB buffer
+
+            // 1 MB * size = total bytes
+            for _ in 0..size {
+                // Fill buffer with random bytes
+                OsRng.fill_bytes(&mut buffer);
+                writer.write_all(&buffer)?;
+            }
+
+            writer.flush()?;
+        }
+    }
+
+    let files: Vec<Vec<u8>> = filenames
+        .iter()
+        .map(|filename| fs::read(filename).expect("file not found"))
+        .collect();
+
+    Ok(files)
+}
+
+fn cleanup_files(filenames: Vec<&str>) -> std::io::Result<()> {
+    for filename in filenames.iter() {
+        if Path::new(filename).exists() {
+            fs::remove_file(filename)?;
+        }
+    }
+    Ok(())
+}
+
+fn test_merkle_tree(files: &Vec<Vec<u8>>) {
+    let hasher = SHA256Hasher::new();
+
+    let tree = MerkleTree::new(hasher.clone(), files);
+    let proofer = DefaultProofer::new(&hasher, tree.leaves().clone());
+    let root = tree.root();
+    let root_hash = root.hash();
+
+    for i in 0..files.len() {
+        let proof = proofer.generate(i).expect("proof generation failed");
+        assert!(proofer.verify(&proof, &files[i], root_hash, &hasher));
+    }
+}
+
+/// Example of a MarkleTree with 512 nodes which use SHA256 algorithm to make hashes.
+/// Each node has a size of 1024 bytes.
+/// Also, it verifies each node path with a proofer O(n).
+fn bench_large_merkle_tree_sha256(c: &mut Criterion) {
+    let filenames = vec![
+        "file-100mb-1.dat",
+        "file-100mb-2.dat",
+        "file-100mb-3.dat",
+        "file-100mb-4.dat",
+        "file-100mb-5.dat",
+        "file-100mb-6.dat",
+        "file-100mb-7.dat",
+        "file-100mb-8.dat",
+        "file-100mb-9.dat",
+        "file-100mb-10.dat",
+    ];
+
+    let mut group = c.benchmark_group("MerkleTree");
+    group.sample_size(10);
+    for size in [5, 10, 15] {
+        group.bench_function(
+            format!("MerkleTree creation and validation with 10 nodes and SHA256 algorithm. {size} MB per each file."),
+            |b| {
+                let files = setup_files(filenames.clone(), size).expect("failed to allocate new files");
+
+                b.iter(|| {
+                    test_merkle_tree(&files);
+                });
+                cleanup_files(filenames.clone()).expect("failed to deallocate data");
+            },
+        );
+    }
+    group.finish();
+}
+
+criterion_group!(benches, bench_large_merkle_tree_sha256);
+criterion_main!(benches);
