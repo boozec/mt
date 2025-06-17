@@ -1,5 +1,5 @@
 [package]
-name = "mt"
+name = "mt-rs"
 author = "Santo Cariotti <santo@dcariotti.me>"
 version = "0.1.0"
 edition = "2024"
