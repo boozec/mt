@@ -60,34 +60,46 @@ impl MerkleTree {
     }
 
     /// Constructs the internal nodes of the tree from the leaves upward and computes the root.
-    fn build<H>(hasher: H, mut nodes: Vec<Node>) -> Self
+    fn build<H>(hasher: H, nodes: Vec<Node>) -> Self
     where
         H: Hasher + 'static,
     {
         let leaves = nodes.clone();
+        let mut current_level = nodes;
+        let mut next_level = Vec::with_capacity((current_level.len() + 1) / 2);
         let mut height = 0;
 
-        while nodes.len() > 1 {
-            if nodes.len() % 2 != 0 {
+        while current_level.len() > 1 {
+            if current_level.len() % 2 != 0 {
                 // duplicate last node to make the count even
-                nodes.push(nodes.last().unwrap().clone());
+                current_level.push(current_level.last().unwrap().clone());
             }
 
-            let mut next_level = Vec::new();
-            for pair in nodes.chunks(2) {
-                let (left, right) = (pair[0].clone(), pair[1].clone());
+            next_level.clear();
 
-                let mut buffer = Vec::<u8>::new();
-                buffer.extend_from_slice(left.hash().as_bytes());
-                buffer.extend_from_slice(right.hash().as_bytes());
+            for pair in current_level.chunks(2) {
+                let (left, right) = (&pair[0], &pair[1]);
+
+                let (left_hash, right_hash) = (left.hash().as_bytes(), right.hash().as_bytes());
+
+                let mut buffer = Vec::<u8>::with_capacity(left_hash.len() + right_hash.len());
+                buffer.extend_from_slice(left_hash);
+                buffer.extend_from_slice(right_hash);
+
                 let hash = hasher.hash(&buffer);
-                next_level.push(Node::new_internal(&buffer, hash, left, right));
+                next_level.push(Node::new_internal(
+                    &buffer,
+                    hash,
+                    left.clone(),
+                    right.clone(),
+                ));
             }
-            nodes = next_level;
+
+            std::mem::swap(&mut current_level, &mut next_level);
             height += 1;
         }
 
-        let root = nodes.remove(0);
+        let root = current_level.remove(0);
 
         MerkleTree {
             leaves,
@@ -95,7 +107,6 @@ impl MerkleTree {
             root,
         }
     }
-
     /// Returns the height (number of levels) of the tree.
     pub fn height(&self) -> usize {
         self.height
