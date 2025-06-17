@@ -77,7 +77,7 @@ impl Proofer for DefaultProofer<'_> {
         while current_level.len() > 1 {
             // Ensure even number of nodes at this level
             if current_level.len() % 2 != 0 {
-                current_level.push(current_level[current_level.len() - 1].clone());
+                current_level.push(current_level.last().unwrap().clone());
             }
 
             // Find the sibling of the current node

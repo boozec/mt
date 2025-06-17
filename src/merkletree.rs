@@ -53,7 +53,7 @@ impl MerkleTree {
             .collect();
 
         if leaves.len() % 2 != 0 {
-            leaves.push(leaves[leaves.len() - 1].clone());
+            leaves.push(leaves.last().unwrap().clone());
         }
 
         Self::build(hasher, leaves)
@@ -70,7 +70,7 @@ impl MerkleTree {
         while nodes.len() > 1 {
             if nodes.len() % 2 != 0 {
                 // duplicate last node to make the count even
-                nodes.push(nodes[nodes.len() - 1].clone());
+                nodes.push(nodes.last().unwrap().clone());
             }
 
             let mut next_level = Vec::new();
