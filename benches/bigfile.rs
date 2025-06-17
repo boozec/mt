@@ -10,7 +10,7 @@ use std::io::{BufWriter, Write};
 use std::path::Path;
 
 // Create files `filenames` with random data with a size of `size` MB.
-fn setup_files(filenames: Vec<&str>, size: usize) -> std::io::Result<Vec<Vec<u8>>> {
+fn setup_files(filenames: &Vec<String>, size: usize) -> std::io::Result<Vec<Vec<u8>>> {
     for filename in filenames.iter() {
         if !Path::new(filename).exists() {
             let file = File::create(filename)?;
@@ -37,7 +37,7 @@ fn setup_files(filenames: Vec<&str>, size: usize) -> std::io::Result<Vec<Vec<u8>
     Ok(files)
 }
 
-fn cleanup_files(filenames: Vec<&str>) -> std::io::Result<()> {
+fn cleanup_files(filenames: &Vec<String>) -> std::io::Result<()> {
     for filename in filenames.iter() {
         if Path::new(filename).exists() {
             fs::remove_file(filename)?;
@@ -64,18 +64,7 @@ fn test_merkle_tree(files: &Vec<Vec<u8>>) {
 /// Each node has a size of 1024 bytes.
 /// Also, it verifies each node path with a proofer O(n).
 fn bench_large_merkle_tree_sha256(c: &mut Criterion) {
-    let filenames = vec![
-        "file-100mb-1.dat",
-        "file-100mb-2.dat",
-        "file-100mb-3.dat",
-        "file-100mb-4.dat",
-        "file-100mb-5.dat",
-        "file-100mb-6.dat",
-        "file-100mb-7.dat",
-        "file-100mb-8.dat",
-        "file-100mb-9.dat",
-        "file-100mb-10.dat",
-    ];
+    let filenames: Vec<String> = (1..=10).map(|i| format!("file-{i}.dat")).collect();
 
     let mut group = c.benchmark_group("MerkleTree");
     group.sample_size(10);
@@ -83,12 +72,12 @@ fn bench_large_merkle_tree_sha256(c: &mut Criterion) {
         group.bench_function(
             format!("MerkleTree creation and validation with 10 nodes and SHA256 algorithm. {size} MB per each file."),
             |b| {
-                let files = setup_files(filenames.clone(), size).expect("failed to allocate new files");
+                let files = setup_files(&filenames, size).expect("failed to allocate new files");
 
                 b.iter(|| {
                     test_merkle_tree(&files);
                 });
-                cleanup_files(filenames.clone()).expect("failed to deallocate data");
+                cleanup_files(&filenames).expect("failed to deallocate data");
             },
         );
     }
