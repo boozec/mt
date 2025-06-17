@@ -101,13 +101,21 @@ impl Proofer for DefaultProofer<'_> {
             // Move to the next level
             let mut next_level = Vec::new();
             for pair in current_level.chunks(2) {
-                let (left, right) = (pair[0].clone(), pair[1].clone());
+                let (left, right) = (&pair[0], &pair[1]);
 
-                let mut buffer = Vec::<u8>::new();
-                buffer.extend_from_slice(left.hash().as_bytes());
-                buffer.extend_from_slice(right.hash().as_bytes());
+                let (left_hash, right_hash) = (left.hash().as_bytes(), right.hash().as_bytes());
+
+                let mut buffer = Vec::<u8>::with_capacity(left_hash.len() + right_hash.len());
+                buffer.extend_from_slice(left_hash);
+                buffer.extend_from_slice(right_hash);
+
                 let hash = self.hasher.hash(&buffer);
-                next_level.push(Node::new_internal(&buffer, hash, left, right));
+                next_level.push(Node::new_internal(
+                    &buffer,
+                    hash,
+                    left.clone(),
+                    right.clone(),
+                ));
             }
             current_level = next_level;
             current_index /= 2;
