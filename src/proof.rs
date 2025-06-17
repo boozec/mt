@@ -181,4 +181,21 @@ mod tests {
             assert!(proofer.verify(&proof, item, tree.root().hash(), &hasher));
         }
     }
+
+    #[test]
+    fn test_proof_not_valid() {
+        let hasher = SHA256Hasher::new();
+        let data = vec!["a", "b", "c", "d"];
+        let tree = MerkleTree::new(hasher.clone(), data.clone());
+        let proofer = DefaultProofer::new(&hasher, tree.leaves().clone());
+
+        let proof = proofer.generate(0).unwrap();
+
+        assert!(proofer.verify(&proof, b"a", tree.root().hash(), &hasher));
+        assert!(!proofer.verify(&proof, b"b", tree.root().hash(), &hasher));
+        assert!(!proofer.verify(&proof, b"c", tree.root().hash(), &hasher));
+        assert!(!proofer.verify(&proof, b"d", tree.root().hash(), &hasher));
+
+        assert!(!proofer.verify(&proof, b"e", tree.root().hash(), &hasher));
+    }
 }
