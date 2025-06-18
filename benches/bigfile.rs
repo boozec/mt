@@ -60,8 +60,8 @@ fn test_merkle_tree(files: &Vec<Vec<u8>>) {
     }
 }
 
-/// Example of a MarkleTree with 512 nodes which use SHA256 algorithm to make hashes.
-/// Each node has a size of 1024 bytes.
+/// Example of a MarkleTree with 10 nodes which use SHA256 algorithm to make hashes.
+/// Each node has a size of 5, 10 or 15 MB.
 /// Also, it verifies each node path with a proofer O(n).
 fn bench_large_merkle_tree_sha256(c: &mut Criterion) {
     let filenames: Vec<String> = (1..=10).map(|i| format!("file-{i}.dat")).collect();
