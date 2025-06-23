@@ -5,7 +5,7 @@ fn main() {
     let filenames: Vec<String> = std::env::args().skip(1).collect();
 
     if filenames.is_empty() {
-        eprintln!("Usage: cargo run --exmaple merkletree_blake3 -- <file1> <file2> ...");
+        eprintln!("Usage: cargo run --example merkletree_blake3 -- <file1> <file2> ...");
         std::process::exit(1);
     }
 
