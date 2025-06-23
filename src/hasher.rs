@@ -1,7 +1,6 @@
 //! Provides hashing abstractions and implementations including SHA256 and a default dummy hasher.
 
-use sha2::{Digest, Sha256};
-use sha3::Keccak512;
+use sha2::Digest;
 
 /// A trait representing a generic hash function.
 ///
@@ -14,7 +13,7 @@ pub trait Hasher {
 /// A dummy hasher used for testing or demonstration purposes.
 ///
 /// Always returns a static hash value.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct DummyHasher;
 
 impl Hasher for DummyHasher {
@@ -42,36 +41,59 @@ impl SHA256Hasher {
 
 impl Hasher for SHA256Hasher {
     fn hash(&self, input: &[u8]) -> String {
-        let mut hasher = Sha256::new();
+        let mut hasher = sha2::Sha256::new();
         hasher.update(input);
         hex::encode(hasher.finalize())
     }
 }
 
 #[derive(Clone)]
-/// A hasher implementation using the Keccak512 cryptographic hash function.
-pub struct Keccak512Hasher;
+/// A hasher implementation using the Keccak256 cryptographic hash function.
+pub struct Keccak256Hasher;
 
-impl Default for Keccak512Hasher {
+impl Default for Keccak256Hasher {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Keccak512Hasher {
+impl Keccak256Hasher {
     pub fn new() -> Self {
         Self {}
     }
 }
 
-impl Hasher for Keccak512Hasher {
+impl Hasher for Keccak256Hasher {
     fn hash(&self, input: &[u8]) -> String {
-        let mut hasher = Keccak512::new();
+        let mut hasher = sha3::Keccak256::new();
         hasher.update(input);
         hex::encode(hasher.finalize())
     }
 }
 
+#[derive(Clone)]
+/// A hasher implementation using the Blake3 cryptographic hash function.
+pub struct Blake3Hasher;
+
+impl Default for Blake3Hasher {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Blake3Hasher {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Hasher for Blake3Hasher {
+    fn hash(&self, input: &[u8]) -> String {
+        let mut hasher = blake3::Hasher::new();
+        hasher.update(input);
+        hasher.finalize().to_hex().to_string()
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -95,19 +117,37 @@ mod tests {
     }
 
     #[test]
-    fn test_keccak512_hasher_with_known_input() {
-        let hasher = Keccak512Hasher;
+    fn test_keccak256_hasher_with_known_input() {
+        let hasher = Keccak256Hasher;
         let input = "hello".as_bytes();
-        let expected_hash = "52fa80662e64c128f8389c9ea6c73d4c02368004bf4463491900d11aaadca39d47de1b01361f207c512cfa79f0f92c3395c67ff7928e3f5ce3e3c852b392f976";
+        let expected_hash = "1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8";
         let actual_hash = hasher.hash(input);
         assert_eq!(actual_hash, expected_hash);
     }
 
     #[test]
-    fn test_keccak512_hasher_empty_string() {
-        let hasher = Keccak512Hasher;
+    fn test_keccak256_hasher_empty_string() {
+        let hasher = Keccak256Hasher;
         let input = &[];
-        let expected_hash = "0eab42de4c3ceb9235fc91acffe746b29c29a8c366b7c60e4e67c466f36a4304c00fa9caf9d87976ba469bcbe06713b435f091ef2769fb160cdab33d3670680e";
+        let expected_hash = "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470";
+        let actual_hash = hasher.hash(input);
+        assert_eq!(actual_hash, expected_hash);
+    }
+
+    #[test]
+    fn test_blake3_hasher_with_known_input() {
+        let hasher = Blake3Hasher;
+        let input = "hello".as_bytes();
+        let expected_hash = "ea8f163db38682925e4491c5e58d4bb3506ef8c14eb78a86e908c5624a67200f";
+        let actual_hash = hasher.hash(input);
+        assert_eq!(actual_hash, expected_hash);
+    }
+
+    #[test]
+    fn test_blake3_hasher_empty_string() {
+        let hasher = Blake3Hasher;
+        let input = &[];
+        let expected_hash = "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262";
         let actual_hash = hasher.hash(input);
         assert_eq!(actual_hash, expected_hash);
     }
