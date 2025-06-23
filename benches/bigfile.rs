@@ -1,6 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use mt_rs::{
-    hasher::SHA256Hasher,
+    hasher::{Hasher, Keccak512Hasher, SHA256Hasher},
     merkletree::MerkleTree,
     proof::{DefaultProofer, Proofer},
 };
@@ -46,9 +46,7 @@ fn cleanup_files(filenames: &Vec<String>) -> std::io::Result<()> {
     Ok(())
 }
 
-fn test_merkle_tree(files: &Vec<Vec<u8>>) {
-    let hasher = SHA256Hasher::new();
-
+fn test_merkle_tree<H: Hasher + Clone + 'static>(hasher: H, files: &Vec<Vec<u8>>) {
     let tree = MerkleTree::new(hasher.clone(), files);
     let proofer = DefaultProofer::new(&hasher, tree.leaves().clone());
     let root = tree.root();
@@ -75,7 +73,21 @@ fn bench_large_merkle_tree_sha256(c: &mut Criterion) {
                 let files = setup_files(&filenames, size).expect("failed to allocate new files");
 
                 b.iter(|| {
-                    test_merkle_tree(&files);
+                    let hasher = SHA256Hasher::new();
+                    test_merkle_tree(hasher, &files);
+                });
+                cleanup_files(&filenames).expect("failed to deallocate data");
+            },
+        );
+
+        group.bench_function(
+            format!("MerkleTree creation and validation with 10 nodes and Keccak512 algorithm. {size} MB per each file."),
+            |b| {
+                let files = setup_files(&filenames, size).expect("failed to allocate new files");
+
+                b.iter(|| {
+                    let hasher = Keccak512Hasher::new();
+                    test_merkle_tree(hasher, &files);
                 });
                 cleanup_files(&filenames).expect("failed to deallocate data");
             },
@@ -84,5 +96,34 @@ fn bench_large_merkle_tree_sha256(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_large_merkle_tree_sha256);
+/// Example of a MarkleTree with 10 nodes which use Keccak512 algorithm to make hashes.
+/// Each node has a size of 5, 10 or 15 MB.
+/// Also, it verifies each node path with a proofer O(n).
+fn bench_large_merkle_tree_keccak512(c: &mut Criterion) {
+    let filenames: Vec<String> = (1..=10).map(|i| format!("file-{i}.dat")).collect();
+
+    let mut group = c.benchmark_group("MerkleTree");
+    group.sample_size(10);
+    for size in [5, 10, 15] {
+        group.bench_function(
+            format!("MerkleTree creation and validation with 10 nodes and Keccak512 algorithm. {size} MB per each file."),
+            |b| {
+                let files = setup_files(&filenames, size).expect("failed to allocate new files");
+
+                b.iter(|| {
+                    let hasher = Keccak512Hasher::new();
+                    test_merkle_tree(hasher, &files);
+                });
+                cleanup_files(&filenames).expect("failed to deallocate data");
+            },
+        );
+    }
+    group.finish();
+}
+
+criterion_group!(
+    benches,
+    bench_large_merkle_tree_sha256,
+    bench_large_merkle_tree_keccak512
+);
 criterion_main!(benches);
