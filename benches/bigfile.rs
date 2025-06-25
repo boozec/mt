@@ -48,13 +48,13 @@ fn cleanup_files(filenames: &Vec<String>) -> std::io::Result<()> {
 
 fn test_merkle_tree<H: Hasher + Clone + 'static>(hasher: H, files: &Vec<Vec<u8>>) {
     let tree = MerkleTree::new(hasher.clone(), files);
-    let proofer = DefaultProofer::new(&hasher, tree.leaves().clone());
+    let proofer = DefaultProofer::new(hasher, tree.leaves().clone());
     let root = tree.root();
     let root_hash = root.hash();
 
     for i in 0..files.len() {
         let proof = proofer.generate(i).expect("proof generation failed");
-        assert!(proofer.verify(&proof, &files[i], root_hash, &hasher));
+        assert!(proofer.verify(&proof, &files[i], root_hash));
     }
 }
 

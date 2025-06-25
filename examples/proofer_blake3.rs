@@ -33,7 +33,7 @@ fn main() {
     }
 
     let hasher = Blake3Hasher::new();
-    let proofer = DefaultProofer::new(&hasher, nodes);
+    let proofer = DefaultProofer::new(hasher, nodes);
     let proof = proofer.generate(0).expect("Couldn't generate proof");
 
     println!(
@@ -41,8 +41,7 @@ fn main() {
         proofer.verify(
             &proof,
             std::fs::read(&filenames[0]).unwrap(),
-            &root_hash[..],
-            &hasher
+            &root_hash[..]
         )
     );
 }

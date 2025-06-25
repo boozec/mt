@@ -26,22 +26,20 @@
 //!     "a08c44656fb3f561619b8747a0d1dabe97126d9ed6e0cafbd7ce08ebe12d55ca"
 //! );
 //!
-//! let proofer = DefaultProofer::new(&hasher, tree.leaves().clone());
+//! let proofer = DefaultProofer::new(hasher, tree.leaves().clone());
 //!
 //! let proof = proofer.generate(0).expect("proof generation failed");
 //!
 //! assert!(proofer.verify(
 //!     &proof,
 //!     &files[0],
-//!     "a08c44656fb3f561619b8747a0d1dabe97126d9ed6e0cafbd7ce08ebe12d55ca",
-//!     &hasher
+//!     "a08c44656fb3f561619b8747a0d1dabe97126d9ed6e0cafbd7ce08ebe12d55ca"
 //! ));
 //!
 //! assert!(!proofer.verify(
 //!     &proof,
 //!     &files[0],
-//!     "a08c44656fb3f561619b87_NOT_VALID_HASH_9ed6e0cafbd7ce08ebe12d55ca",
-//!     &hasher
+//!     "a08c44656fb3f561619b87_NOT_VALID_HASH_9ed6e0cafbd7ce08ebe12d55ca"
 //! ));
 //!
 //! let proof = proofer.generate(1).expect("proof generation failed");
@@ -50,7 +48,6 @@
 //!     &proof,
 //!     &files[1],
 //!     "a08c44656fb3f561619b8747a0d1dabe97126d9ed6e0cafbd7ce08ebe12d55ca",
-//!     &hasher
 //! ));
 //!
 //! ```

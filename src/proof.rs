@@ -42,28 +42,33 @@ pub trait Proofer {
     /// * `proof` - The Merkle proof.
     /// * `data` - The original data to verify.
     /// * `root_hash` - The expected root hash of the tree.
-    /// * `hasher` - The hasher used to construct the tree.
     ///
     /// # Returns
     ///
     /// `true` if the proof is valid and the data exists in the tree, `false` otherwise.
-    fn verify<T>(&self, proof: &MerkleProof, data: T, root_hash: &str, hasher: &dyn Hasher) -> bool
+    fn verify<T>(&self, proof: &MerkleProof, data: T, root_hash: &str) -> bool
     where
         T: AsRef<[u8]>;
 }
 
-pub struct DefaultProofer<'a> {
-    hasher: &'a dyn Hasher,
+pub struct DefaultProofer<H: Hasher> {
+    hasher: H,
     leaves: Vec<Node>,
 }
 
-impl<'a> DefaultProofer<'a> {
-    pub fn new(hasher: &'a dyn Hasher, leaves: Vec<Node>) -> Self {
+impl<H> DefaultProofer<H>
+where
+    H: Hasher,
+{
+    pub fn new(hasher: H, leaves: Vec<Node>) -> Self {
         Self { hasher, leaves }
     }
 }
 
-impl Proofer for DefaultProofer<'_> {
+impl<H> Proofer for DefaultProofer<H>
+where
+    H: Hasher,
+{
     fn generate(&self, index: usize) -> Option<MerkleProof> {
         if index >= self.leaves.len() {
             return None;
@@ -122,12 +127,12 @@ impl Proofer for DefaultProofer<'_> {
         })
     }
 
-    fn verify<T>(&self, proof: &MerkleProof, data: T, root_hash: &str, hasher: &dyn Hasher) -> bool
+    fn verify<T>(&self, proof: &MerkleProof, data: T, root_hash: &str) -> bool
     where
         T: AsRef<[u8]>,
     {
         // Start with the hash of the data
-        let mut current_hash = hasher.hash(data.as_ref());
+        let mut current_hash = self.hasher.hash(data.as_ref());
 
         // Walk up the tree using the proof path
         for proof_node in &proof.path {
@@ -135,7 +140,7 @@ impl Proofer for DefaultProofer<'_> {
                 NodeChildType::Left => format!("{}{}", proof_node.hash, current_hash),
                 NodeChildType::Right => format!("{}{}", current_hash, proof_node.hash),
             };
-            current_hash = hasher.hash(combined.as_bytes());
+            current_hash = self.hasher.hash(combined.as_bytes());
         }
 
         // Check if the computed root matches the expected root
@@ -154,12 +159,12 @@ mod tests {
         let hasher = DummyHasher;
         let data = vec!["a", "b", "c", "d"];
         let tree = MerkleTree::new(hasher.clone(), data.clone());
-        let proofer = DefaultProofer::new(&hasher, tree.leaves());
+        let proofer = DefaultProofer::new(hasher, tree.leaves());
 
         for (index, item) in data.iter().enumerate() {
             let proof = proofer.generate(index).unwrap();
 
-            assert!(proofer.verify(&proof, item, tree.root().hash(), &hasher));
+            assert!(proofer.verify(&proof, item, tree.root().hash()));
         }
     }
 
@@ -168,12 +173,12 @@ mod tests {
         let hasher = SHA256Hasher::new();
         let data = vec!["a", "b", "c", "d"];
         let tree = MerkleTree::new(hasher.clone(), data.clone());
-        let proofer = DefaultProofer::new(&hasher, tree.leaves().clone());
+        let proofer = DefaultProofer::new(hasher, tree.leaves().clone());
 
         for (index, item) in data.iter().enumerate() {
             let proof = proofer.generate(index).unwrap();
 
-            assert!(proofer.verify(&proof, item, tree.root().hash(), &hasher));
+            assert!(proofer.verify(&proof, item, tree.root().hash()));
         }
     }
 
@@ -182,15 +187,15 @@ mod tests {
         let hasher = SHA256Hasher::new();
         let data = vec!["a", "b", "c", "d"];
         let tree = MerkleTree::new(hasher.clone(), data.clone());
-        let proofer = DefaultProofer::new(&hasher, tree.leaves().clone());
+        let proofer = DefaultProofer::new(hasher, tree.leaves().clone());
 
         let proof = proofer.generate(0).unwrap();
 
-        assert!(proofer.verify(&proof, b"a", tree.root().hash(), &hasher));
-        assert!(!proofer.verify(&proof, b"b", tree.root().hash(), &hasher));
-        assert!(!proofer.verify(&proof, b"c", tree.root().hash(), &hasher));
-        assert!(!proofer.verify(&proof, b"d", tree.root().hash(), &hasher));
+        assert!(proofer.verify(&proof, b"a", tree.root().hash()));
+        assert!(!proofer.verify(&proof, b"b", tree.root().hash()));
+        assert!(!proofer.verify(&proof, b"c", tree.root().hash()));
+        assert!(!proofer.verify(&proof, b"d", tree.root().hash()));
 
-        assert!(!proofer.verify(&proof, b"e", tree.root().hash(), &hasher));
+        assert!(!proofer.verify(&proof, b"e", tree.root().hash()));
     }
 }

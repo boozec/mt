@@ -54,11 +54,11 @@ fn main() {
 
     let hasher = Blake3Hasher::new();
     let tree = MerkleTree::new(hasher.clone(), file_contents.clone());
-    let proofer = DefaultProofer::new(&hasher, tree.leaves());
+    let proofer = DefaultProofer::new(hasher, tree.leaves());
     let proof = proofer.generate(0).expect("Couldn't generate proof");
 
     assert!(tree.root().hash() == root_hash);
-    assert!(proofer.verify(&proof, std::fs::read(&filenames[0]).unwrap(), tree.root().hash(), &hasher));
+    assert!(proofer.verify(&proof, std::fs::read(&filenames[0]).unwrap(), tree.root().hash()));
 }
 ```
 
@@ -86,12 +86,15 @@ use mt_rs::proof::Proofer;
 
 pub struct FooProofer;
 
-impl Proofer for FooProofer {
+impl<H> Proofer for FooProfer<H>
+where
+    H: Hasher,
+{
     fn generate(&self, index: usize) -> Option<MerkleProof> {
         // ...
     }
 
-    fn verify<T>(&self, proof: &MerkleProof, data: T, root_hash: &str, hasher: &dyn Hasher) -> bool
+    fn verify<T>(&self, proof: &MerkleProof, data: T, root_hash: &str) -> bool
     where
         T: AsRef<[u8]>,
     {
@@ -110,10 +113,10 @@ let tree = MerkleTree::new(hasher.clone(), data);
 println!("{}", tree.root().hash());
 
 
-let proofer = FooProofer::new(&hasher, tree.leaves().clone());
+let proofer = FooProofer::new(hasher, tree.leaves().clone());
 
 let proof = proofer.generate(0).unwrap();
-assert!(proofer.verify(&proof, data[0], tree.root().hash(), &hasher));
+assert!(proofer.verify(&proof, data[0], tree.root().hash()));
 ```
 
 ## Configuration
