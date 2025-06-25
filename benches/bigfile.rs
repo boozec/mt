@@ -46,7 +46,10 @@ fn cleanup_files(filenames: &Vec<String>) -> std::io::Result<()> {
     Ok(())
 }
 
-fn test_merkle_tree<H: Hasher + Clone + 'static>(hasher: H, files: &Vec<Vec<u8>>) {
+fn test_merkle_tree<H: Hasher + Clone + 'static + std::marker::Sync>(
+    hasher: H,
+    files: &Vec<Vec<u8>>,
+) {
     let tree = MerkleTree::new(hasher.clone(), files);
     let proofer = DefaultProofer::new(hasher, tree.leaves().clone());
     let root = tree.root();
@@ -118,7 +121,7 @@ fn bench_large_merkle_tree_blake3(c: &mut Criterion) {
     group.sample_size(10);
     for size in [5, 10, 15] {
         group.bench_function(
-            format!("MerkleTree creation and validation with 10 nodes and Keccak256 algorithm. {size} MB per each file."),
+            format!("MerkleTree creation and validation with 10 nodes and Blake3 algorithm. {size} MB per each file."),
             |b| {
                 let files = setup_files(&filenames, size).expect("failed to allocate new files");
 

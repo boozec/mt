@@ -4,6 +4,7 @@ use crate::{
     hasher::Hasher,
     node::{Node, NodeChildType},
 };
+use rayon::prelude::*;
 
 /// Represents a single step in a Merkle proof path.
 #[derive(Debug, Clone)]
@@ -77,6 +78,7 @@ where
         let mut path = Vec::new();
         let mut current_index = index;
         let mut current_level = self.leaves.clone();
+        let mut next_level = Vec::with_capacity((current_level.len() + 1) / 2);
 
         // Buildthe proof by walking up the tree
         while current_level.len() > 1 {
@@ -104,20 +106,24 @@ where
             });
 
             // Move to the next level
-            let mut next_level = Vec::new();
-            for pair in current_level.chunks(2) {
-                let (left, right) = (&pair[0], &pair[1]);
+            next_level.clear();
+            next_level = current_level
+                .par_chunks(2)
+                .map(|pair| {
+                    let (left, right) = (&pair[0], &pair[1]);
 
-                let (left_hash, right_hash) = (left.hash().as_bytes(), right.hash().as_bytes());
+                    let (left_hash, right_hash) = (left.hash().as_bytes(), right.hash().as_bytes());
 
-                let mut buffer = Vec::<u8>::with_capacity(left_hash.len() + right_hash.len());
-                buffer.extend_from_slice(left_hash);
-                buffer.extend_from_slice(right_hash);
+                    let mut buffer = Vec::with_capacity(left_hash.len() + right_hash.len());
+                    buffer.extend_from_slice(left_hash);
+                    buffer.extend_from_slice(right_hash);
 
-                let hash = self.hasher.hash(&buffer);
-                next_level.push(Node::new_internal(hash, left.clone(), right.clone()));
-            }
-            current_level = next_level;
+                    let hash = self.hasher.hash(&buffer);
+                    Node::new_internal(hash, left.clone(), right.clone())
+                })
+                .collect();
+
+            std::mem::swap(&mut current_level, &mut next_level);
             current_index /= 2;
         }
 

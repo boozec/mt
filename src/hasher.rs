@@ -5,7 +5,7 @@ use sha2::Digest;
 /// A trait representing a generic hash function.
 ///
 /// This allows the Merkle tree to use any hash function that conforms to this interface.
-pub trait Hasher {
+pub trait Hasher: Send + Sync {
     /// Hashes a sequence of bytes and returns the resulting hash as a hexadecimal string.
     fn hash(&self, input: &[u8]) -> String;
 }
