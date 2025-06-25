@@ -110,12 +110,7 @@ impl Proofer for DefaultProofer<'_> {
                 buffer.extend_from_slice(right_hash);
 
                 let hash = self.hasher.hash(&buffer);
-                next_level.push(Node::new_internal(
-                    &buffer,
-                    hash,
-                    left.clone(),
-                    right.clone(),
-                ));
+                next_level.push(Node::new_internal(hash, left.clone(), right.clone()));
             }
             current_level = next_level;
             current_index /= 2;

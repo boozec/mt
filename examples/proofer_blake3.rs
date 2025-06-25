@@ -24,10 +24,7 @@ fn main() {
     let mut nodes: Vec<Node> = Vec::new();
     for filename in &filenames {
         match std::fs::read(filename) {
-            Ok(contents) => {
-                let hash = Blake3Hasher::new().hash(&contents);
-                nodes.push(Node::new_leaf(&contents, hash));
-            }
+            Ok(contents) => nodes.push(Node::new_leaf(Blake3Hasher::new().hash(&contents))),
             Err(e) => {
                 eprintln!("Failed to read file '{}': {}", filename, e);
                 std::process::exit(1);
@@ -35,13 +32,17 @@ fn main() {
         }
     }
 
-    let first_node = nodes[0].clone();
     let hasher = Blake3Hasher::new();
     let proofer = DefaultProofer::new(&hasher, nodes);
     let proof = proofer.generate(0).expect("Couldn't generate proof");
 
     println!(
         "{}",
-        proofer.verify(&proof, first_node.data(), &root_hash[..], &hasher)
+        proofer.verify(
+            &proof,
+            std::fs::read(&filenames[0]).unwrap(),
+            &root_hash[..],
+            &hasher
+        )
     );
 }

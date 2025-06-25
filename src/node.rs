@@ -43,8 +43,6 @@ pub struct Node {
     hash: String,
     /// Type of the node: leaf or internal.
     status: NodeStatus,
-    /// Data in bytes.
-    data: Vec<u8>,
 }
 
 impl Node {
@@ -53,11 +51,9 @@ impl Node {
     /// # Arguments
     ///
     /// * `hasher` - A reference to a hashing strategy.
-    /// * `data` - The data to be hashed and stored as a leaf.
-    pub fn new_leaf(data: &[u8], hash: String) -> Self {
+    pub fn new_leaf(hash: String) -> Self {
         Self {
             hash,
-            data: data.to_vec(),
             status: NodeStatus::Leaf,
         }
     }
@@ -66,17 +62,16 @@ impl Node {
     ///
     /// # Arguments
     ///
-    /// * `hasher` - A reference to a hashing strategy.
+    /// * `hash` - An hash value for the following node.
     /// * `left` - Left child node.
     /// * `right` - Right child node.
     ///
     /// # Behavior
     ///
     /// The internal node hash is computed as the hash of the concatenated children's hashes.
-    pub fn new_internal(data: &[u8], hash: String, left: Node, right: Node) -> Self {
+    pub fn new_internal(hash: String, left: Node, right: Node) -> Self {
         Self {
             hash,
-            data: data.to_vec(),
             status: NodeStatus::Internal(Box::new(left), Box::new(right)),
         }
     }
@@ -84,11 +79,6 @@ impl Node {
     /// Returns a reference to the hash of the node.
     pub fn hash(&self) -> &str {
         &self.hash
-    }
-
-    /// Returns the data value in bytes format.
-    pub fn data(&self) -> &[u8] {
-        &self.data
     }
 
     /// Returns a reference to the node's type (leaf or internal).

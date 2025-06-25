@@ -49,7 +49,7 @@ impl MerkleTree {
 
         let mut leaves: Vec<Node> = data_slices
             .iter()
-            .map(|data| Node::new_leaf(data, hasher.hash(data)))
+            .map(|data| Node::new_leaf(hasher.hash(data)))
             .collect();
 
         if leaves.len() % 2 != 0 {
@@ -87,12 +87,7 @@ impl MerkleTree {
                 buffer.extend_from_slice(right_hash);
 
                 let hash = hasher.hash(&buffer);
-                next_level.push(Node::new_internal(
-                    &buffer,
-                    hash,
-                    left.clone(),
-                    right.clone(),
-                ));
+                next_level.push(Node::new_internal(hash, left.clone(), right.clone()));
             }
 
             std::mem::swap(&mut current_level, &mut next_level);

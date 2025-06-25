@@ -58,7 +58,7 @@ fn main() {
     let proof = proofer.generate(0).expect("Couldn't generate proof");
 
     assert!(tree.root().hash() == root_hash);
-    assert!(proofer.verify(&proof, tree.leaves()[0].data(), tree.root().hash(), &hasher));
+    assert!(proofer.verify(&proof, std::fs::read(&filenames[0]).unwrap(), tree.root().hash(), &hasher));
 }
 ```
 
