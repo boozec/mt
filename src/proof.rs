@@ -64,6 +64,21 @@ where
     pub fn new(hasher: H, leaves: Vec<Node>) -> Self {
         Self { hasher, leaves }
     }
+
+    pub fn verify_hash(&self, proof: &MerkleProof, hash: String, root_hash: &str) -> bool {
+        let mut current_hash = hash;
+        // Walk up the tree using the proof path
+        for proof_node in &proof.path {
+            let combined: String = match proof_node.child_type {
+                NodeChildType::Left => format!("{}{}", proof_node.hash, current_hash),
+                NodeChildType::Right => format!("{}{}", current_hash, proof_node.hash),
+            };
+            current_hash = self.hasher.hash(combined.as_bytes());
+        }
+
+        // Check if the computed root matches the expected root
+        current_hash == root_hash
+    }
 }
 
 impl<H> Proofer for DefaultProofer<H>
@@ -138,19 +153,8 @@ where
         T: AsRef<[u8]>,
     {
         // Start with the hash of the data
-        let mut current_hash = self.hasher.hash(data.as_ref());
-
-        // Walk up the tree using the proof path
-        for proof_node in &proof.path {
-            let combined: String = match proof_node.child_type {
-                NodeChildType::Left => format!("{}{}", proof_node.hash, current_hash),
-                NodeChildType::Right => format!("{}{}", current_hash, proof_node.hash),
-            };
-            current_hash = self.hasher.hash(combined.as_bytes());
-        }
-
-        // Check if the computed root matches the expected root
-        current_hash == root_hash
+        let hash: String = self.hasher.hash(data.as_ref());
+        self.verify_hash(proof, hash, root_hash)
     }
 }
 

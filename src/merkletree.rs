@@ -1,7 +1,7 @@
 //! Provides the MerkleTree structure and associated methods for creating and interacting
 //! with binary Merkle trees using custom hashers.
 
-use crate::{hasher::Hasher, node::Node};
+use crate::{fs, hasher::Hasher, node::Node};
 use rayon::prelude::*;
 
 /// A binary Merkle tree implementation.
@@ -52,6 +52,20 @@ impl MerkleTree {
             .iter()
             .map(|data| Node::new_leaf(hasher.hash(data)))
             .collect();
+
+        if leaves.len() % 2 != 0 {
+            leaves.push(leaves.last().unwrap().clone());
+        }
+
+        Self::build(hasher, leaves)
+    }
+
+    /// Construct a Merkletree from an iter of String-s.
+    pub fn from_paths<H>(hasher: H, paths: Vec<String>) -> Self
+    where
+        H: Hasher + 'static + std::marker::Sync + Clone,
+    {
+        let mut leaves = fs::hash_dir(hasher.clone(), paths);
 
         if leaves.len() % 2 != 0 {
             leaves.push(leaves.last().unwrap().clone());

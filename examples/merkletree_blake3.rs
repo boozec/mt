@@ -10,19 +10,9 @@ fn main() {
     }
 
     // Read file contents into a vector of bytes
-    let mut file_contents = Vec::new();
-    for filename in &filenames {
-        match std::fs::read(filename) {
-            Ok(contents) => file_contents.push(contents),
-            Err(e) => {
-                eprintln!("Failed to read file '{}': {}", filename, e);
-                std::process::exit(1);
-            }
-        }
-    }
-
     let hasher = Blake3Hasher::new();
-    let tree = MerkleTree::new(hasher.clone(), file_contents.clone());
+
+    let tree = MerkleTree::from_paths(hasher, filenames);
 
     println!("{}", tree.root().hash());
 }
