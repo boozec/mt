@@ -93,22 +93,15 @@ where
         let mut path = Vec::new();
         let mut current_index = index;
         let mut current_level = self.leaves.clone();
-        let mut next_level = Vec::with_capacity((current_level.len() + 1) / 2);
 
-        // Buildthe proof by walking up the tree
         while current_level.len() > 1 {
-            // Ensure even number of nodes at this level
             if current_level.len() % 2 != 0 {
-                current_level.push(current_level.last().unwrap().clone());
+                current_level.push(current_level.last()?.clone());
             }
 
-            // Find the sibling of the current node
-            let sibling_index = if current_index % 2 == 0 {
-                current_index + 1 // Right sibling
-            } else {
-                current_index - 1 // Left sibling
-            };
-
+            // Flip index to get sibling
+            let sibling_index = current_index ^ 1;
+            let sibling = &current_level[sibling_index];
             let child_type = if sibling_index < current_index {
                 NodeChildType::Left
             } else {
@@ -116,17 +109,15 @@ where
             };
 
             path.push(ProofNode {
-                hash: current_level[sibling_index].hash().to_string(),
+                hash: sibling.hash().to_string(),
                 child_type,
             });
 
             // Move to the next level
-            next_level.clear();
-            next_level = current_level
+            current_level = current_level
                 .par_chunks(2)
                 .map(|pair| {
                     let (left, right) = (&pair[0], &pair[1]);
-
                     let (left_hash, right_hash) = (left.hash().as_bytes(), right.hash().as_bytes());
 
                     let mut buffer = Vec::with_capacity(left_hash.len() + right_hash.len());
@@ -138,8 +129,8 @@ where
                 })
                 .collect();
 
-            std::mem::swap(&mut current_level, &mut next_level);
-            current_index /= 2;
+            // Faster way to make "divide by 2"
+            current_index >>= 1;
         }
 
         Some(MerkleProof {
