@@ -48,14 +48,10 @@ impl MerkleTree {
             "Merkle Tree requires at least one element"
         );
 
-        let mut leaves: Vec<Node> = data_slices
+        let leaves: Vec<Node> = data_slices
             .iter()
             .map(|data| Node::new_leaf(hasher.hash(data)))
             .collect();
-
-        if leaves.len() % 2 != 0 {
-            leaves.push(leaves.last().unwrap().clone());
-        }
 
         Self::build(hasher, leaves)
     }
@@ -65,11 +61,7 @@ impl MerkleTree {
     where
         H: Hasher + 'static + std::marker::Sync + Clone,
     {
-        let mut leaves = fs::hash_dir(hasher.clone(), paths);
-
-        if leaves.len() % 2 != 0 {
-            leaves.push(leaves.last().unwrap().clone());
-        }
+        let leaves = fs::hash_dir(hasher.clone(), paths);
 
         Self::build(hasher, leaves)
     }
@@ -176,11 +168,11 @@ mod tests {
         let data = &["hello".as_bytes()];
         let tree = MerkleTree::new(SHA256Hasher::new(), data);
 
-        assert_eq!(tree.height(), 2);
-        assert_eq!(tree.len(), 2);
+        assert_eq!(tree.height(), 1);
+        assert_eq!(tree.len(), 1);
         assert_eq!(
             tree.root().hash(),
-            "286d189fda11bf4e906b6973a173009f47ede16532f1bae726223f8ee155d73b"
+            "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
         );
     }
 
