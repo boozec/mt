@@ -20,7 +20,7 @@
 //! let tree = MerkleTree::new(hasher.clone(), files.clone());
 //!
 //! assert_eq!(tree.height(), 3);
-//! assert_eq!(tree.len(), 4);
+//! assert_eq!(tree.len(), 3);
 //! assert_eq!(
 //!     tree.root().hash(),
 //!     "a08c44656fb3f561619b8747a0d1dabe97126d9ed6e0cafbd7ce08ebe12d55ca"
