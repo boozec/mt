@@ -4,7 +4,7 @@ use mt_rs::{
     merkletree::MerkleTree,
     proof::{DefaultProofer, Proofer},
 };
-use rand::{RngCore, rngs::OsRng};
+use rand::{TryRngCore, rngs::OsRng};
 use std::fs::{self, File};
 use std::io::{BufWriter, Write};
 use std::path::Path;
@@ -21,7 +21,7 @@ fn setup_files(filenames: &Vec<String>, size: usize) -> std::io::Result<Vec<Vec<
             // 1 MB * size = total bytes
             for _ in 0..size {
                 // Fill buffer with random bytes
-                OsRng.fill_bytes(&mut buffer);
+                let _ = OsRng.try_fill_bytes(&mut buffer);
                 writer.write_all(&buffer)?;
             }
 
