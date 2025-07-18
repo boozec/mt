@@ -3,6 +3,9 @@ name = "mt-rs"
 authors = ["Santo Cariotti <santo@dcariotti.me>"]
 version = "0.1.0"
 edition = "2024"
+repository = "https://github.com/boozec/mt"
+description = "Merkletrees in Rust. Generate Merkletree quickly for files and folders."
+license = "BSD-3-Clause"
 
 [dependencies]
 blake3 = "1.8.2"
