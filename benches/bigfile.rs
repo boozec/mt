@@ -10,7 +10,7 @@ use std::io::{BufWriter, Write};
 use std::path::Path;
 
 // Create files `filenames` with random data with a size of `size` MB.
-fn setup_files(filenames: &Vec<String>, size: usize) -> std::io::Result<Vec<Vec<u8>>> {
+fn setup_files(filenames: &[String], size: usize) -> std::io::Result<Vec<Vec<u8>>> {
     for filename in filenames.iter() {
         if !Path::new(filename).exists() {
             let file = File::create(filename)?;
@@ -37,7 +37,7 @@ fn setup_files(filenames: &Vec<String>, size: usize) -> std::io::Result<Vec<Vec<
     Ok(files)
 }
 
-fn cleanup_files(filenames: &Vec<String>) -> std::io::Result<()> {
+fn cleanup_files(filenames: &[String]) -> std::io::Result<()> {
     for filename in filenames.iter() {
         if Path::new(filename).exists() {
             fs::remove_file(filename)?;

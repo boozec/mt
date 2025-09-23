@@ -10,7 +10,7 @@ use rayon::prelude::*;
 #[derive(Debug, Clone)]
 pub struct ProofNode {
     /// The hash value of the sibling node.
-    pub hash: String,
+    pub hash: [u8; 32],
     /// Whether this sibling is left or right
     pub child_type: NodeChildType,
 }
@@ -47,7 +47,7 @@ pub trait Proofer {
     /// # Returns
     ///
     /// `true` if the proof is valid and the data exists in the tree, `false` otherwise.
-    fn verify<T>(&self, proof: &MerkleProof, data: T, root_hash: &str) -> bool
+    fn verify<T>(&self, proof: &MerkleProof, data: T, root_hash: &[u8]) -> bool
     where
         T: AsRef<[u8]>;
 }
@@ -74,7 +74,10 @@ where
                 .par_chunks(2)
                 .map(|pair| {
                     let (left, right) = (&pair[0], &pair[1]);
-                    let combined = [left.hash().as_bytes(), right.hash().as_bytes()].concat();
+
+                    let mut combined = Vec::with_capacity(64);
+                    combined.extend_from_slice(left.hash());
+                    combined.extend_from_slice(right.hash());
                     let hash = hasher.hash(&combined);
                     Node::new_internal(hash, left.clone(), right.clone())
                 })
@@ -87,15 +90,26 @@ where
         Self { hasher, levels }
     }
 
-    pub fn verify_hash(&self, proof: &MerkleProof, hash: String, root_hash: &str) -> bool {
+    pub fn verify_hash(&self, proof: &MerkleProof, hash: [u8; 32], root_hash: &[u8]) -> bool {
         let mut current_hash = hash;
         // Walk up the tree using the proof path
         for proof_node in &proof.path {
-            let combined: String = match proof_node.child_type {
-                NodeChildType::Left => format!("{}{}", proof_node.hash, current_hash),
-                NodeChildType::Right => format!("{}{}", current_hash, proof_node.hash),
+            let combined_array: [u8; 64] = match proof_node.child_type {
+                NodeChildType::Left => {
+                    let mut result = [0u8; 64];
+                    result[..32].copy_from_slice(&proof_node.hash);
+                    result[32..].copy_from_slice(&current_hash);
+                    result
+                }
+                NodeChildType::Right => {
+                    let mut result = [0u8; 64];
+                    result[..32].copy_from_slice(&current_hash);
+                    result[32..].copy_from_slice(&proof_node.hash);
+                    result
+                }
             };
-            current_hash = self.hasher.hash(combined.as_bytes());
+            let combined: &[u8] = &combined_array;
+            current_hash = self.hasher.hash(combined);
         }
 
         // Check if the computed root matches the expected root
@@ -128,7 +142,7 @@ where
             };
 
             path.push(ProofNode {
-                hash: sibling.hash().to_string(),
+                hash: *sibling.hash(),
                 child_type,
             });
 
@@ -141,12 +155,12 @@ where
         })
     }
 
-    fn verify<T>(&self, proof: &MerkleProof, data: T, root_hash: &str) -> bool
+    fn verify<T>(&self, proof: &MerkleProof, data: T, root_hash: &[u8]) -> bool
     where
         T: AsRef<[u8]>,
     {
         // Start with the hash of the data
-        let hash: String = self.hasher.hash(data.as_ref());
+        let hash = self.hasher.hash(data.as_ref());
         self.verify_hash(proof, hash, root_hash)
     }
 }

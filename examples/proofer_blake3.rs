@@ -7,7 +7,7 @@ use mt_rs::{
 
 fn main() {
     let root_hash = match std::env::args().nth(1) {
-        Some(hash) => hash,
+        Some(hash) => hex::decode(hash).expect("Invalid hex"),
         None => {
             eprintln!(
                 "Usage: cargo run --example proofer_blake3 -- <root_hash> <file1> <file2> ..."
@@ -32,6 +32,6 @@ fn main() {
 
     println!(
         "{}",
-        proofer.verify_hash(&proof, first_node.hash().to_string(), &root_hash[..])
+        proofer.verify_hash(&proof, *first_node.hash(), root_hash.as_slice())
     );
 }

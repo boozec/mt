@@ -8,6 +8,7 @@
 //! use mt_rs::merkletree::MerkleTree;
 //! use mt_rs::proof::{DefaultProofer, Proofer};
 //! use std::fs;
+//! use hex::FromHex;
 //!
 //! let hasher = SHA256Hasher::new();
 //!
@@ -18,12 +19,14 @@
 //! ];
 //!
 //! let tree = MerkleTree::new(hasher.clone(), files.clone());
+//! let expected_hash: [u8; 32] = [234, 138, 20, 254, 128, 0, 128, 159, 12, 226, 35, 251, 177, 36, 7, 188, 237, 204, 49, 55, 159, 125, 178, 2, 150, 188, 118, 117, 229, 234, 161, 20];
+//! let expected_not_valid_hash: [u8; 32] = [234, 0, 20, 254, 128, 0, 128, 159, 12, 226, 35, 251, 177, 36, 7, 188, 237, 204, 49, 55, 159, 125, 178, 2, 150, 188, 118, 117, 229, 234, 161, 20];
 //!
 //! assert_eq!(tree.height(), 3);
 //! assert_eq!(tree.len(), 3);
 //! assert_eq!(
-//!     tree.root().hash(),
-//!     "a08c44656fb3f561619b8747a0d1dabe97126d9ed6e0cafbd7ce08ebe12d55ca"
+//!     *tree.root().hash(),
+//!     expected_hash
 //! );
 //!
 //! let proofer = DefaultProofer::new(hasher, tree.leaves().clone());
@@ -33,13 +36,13 @@
 //! assert!(proofer.verify(
 //!     &proof,
 //!     &files[0],
-//!     "a08c44656fb3f561619b8747a0d1dabe97126d9ed6e0cafbd7ce08ebe12d55ca"
+//!     &expected_hash
 //! ));
 //!
 //! assert!(!proofer.verify(
 //!     &proof,
 //!     &files[0],
-//!     "a08c44656fb3f561619b87_NOT_VALID_HASH_9ed6e0cafbd7ce08ebe12d55ca"
+//!     &expected_not_valid_hash
 //! ));
 //!
 //! let proof = proofer.generate(1).expect("proof generation failed");
@@ -47,7 +50,7 @@
 //! assert!(proofer.verify(
 //!     &proof,
 //!     &files[1],
-//!     "a08c44656fb3f561619b8747a0d1dabe97126d9ed6e0cafbd7ce08ebe12d55ca",
+//!     &expected_hash
 //! ));
 //!
 //! ```

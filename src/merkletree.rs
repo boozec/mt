@@ -88,7 +88,7 @@ impl MerkleTree {
                 .map(|pair| {
                     let (left, right) = (&pair[0], &pair[1]);
 
-                    let (left_hash, right_hash) = (left.hash().as_bytes(), right.hash().as_bytes());
+                    let (left_hash, right_hash) = (left.hash(), right.hash());
 
                     let mut buffer = Vec::with_capacity(left_hash.len() + right_hash.len());
                     buffer.extend_from_slice(left_hash);
@@ -141,14 +141,19 @@ impl MerkleTree {
 mod tests {
     use super::*;
     use crate::hasher::*;
+    use hex::FromHex;
 
     #[test]
     fn test_merkle_tree_with_default_hasher() {
         let data = &["hello".as_bytes(), "world".as_bytes()];
         let tree = MerkleTree::new(DummyHasher, data);
+        let expected_hash: [u8; 32] = Vec::<u8>::from_hex("0539")
+            .unwrap()
+            .try_into()
+            .unwrap_or_default();
 
         assert_eq!(tree.height(), 2);
-        assert_eq!(tree.root().hash(), "hash_539");
+        assert_eq!(*tree.root().hash(), expected_hash);
     }
 
     #[test]
@@ -156,24 +161,28 @@ mod tests {
         let data = &["hello".as_bytes(), "world".as_bytes()];
         let tree = MerkleTree::new(SHA256Hasher::new(), data);
 
+        let expected_hash: [u8; 32] =
+            Vec::<u8>::from_hex("7305db9b2abccd706c256db3d97e5ff48d677cfe4d3a5904afb7da0e3950e1e2")
+                .unwrap()
+                .try_into()
+                .unwrap_or_default();
         assert_eq!(tree.height(), 2);
-        assert_eq!(
-            tree.root().hash(),
-            "15e178b71fae8849ee562c9cc0d7ea322fba6cd495411329d47234479167cc8b"
-        );
+        assert_eq!(*tree.root().hash(), expected_hash);
     }
 
     #[test]
     fn test_merkle_tree_single_leaf() {
         let data = &["hello".as_bytes()];
         let tree = MerkleTree::new(SHA256Hasher::new(), data);
+        let expected_hash: [u8; 32] =
+            Vec::<u8>::from_hex("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824")
+                .unwrap()
+                .try_into()
+                .unwrap_or_default();
 
         assert_eq!(tree.height(), 1);
         assert_eq!(tree.len(), 1);
-        assert_eq!(
-            tree.root().hash(),
-            "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
-        );
+        assert_eq!(*tree.root().hash(), expected_hash);
     }
 
     #[test]
@@ -185,13 +194,11 @@ mod tests {
 
         assert_eq!(tree.height(), 5); // 10 elements padded to 16 → log2(16) + 1 = 5
 
-        // You can print the root hash if you're unsure what it should be:
-        println!("Merkle root hash: {}", tree.root().hash());
-
-        // If you know the expected hash, use:
-        assert_eq!(
-            tree.root().hash(),
-            "9da1ff0dfa79217bdbea9ec96407b1e693646cc493f64059fa27182a37cadf94"
-        );
+        let expected_hash: [u8; 32] =
+            Vec::<u8>::from_hex("b87c652fd291599538570e507a9cc21a62d285f1986db4d7c55b7ba1b817bb32")
+                .unwrap()
+                .try_into()
+                .unwrap_or_default();
+        assert_eq!(*tree.root().hash(), expected_hash);
     }
 }

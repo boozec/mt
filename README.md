@@ -36,29 +36,21 @@ fn main() {
         }
     };
 
+    // Read all the arguments but the first one as list of filenames
     let filenames: Vec<String> = std::env::args().skip(2).collect();
     if filenames.is_empty() {
         std::process::exit(1);
     }
-
-    let mut file_contents = Vec::new();
-    for filename in &filenames {
-        match std::fs::read(filename) {
-            Ok(contents) => file_contents.push(contents),
-            Err(e) => {
-                eprintln!("Failed to read file '{}': {}", filename, e);
-                std::process::exit(1);
-            }
-        }
-    }
+    // Store the data from the first filename because it'll be used for the proof later
+    let file_0 = std::fs::read(&filenames[0]).unwrap();
 
     let hasher = Blake3Hasher::new();
-    let tree = MerkleTree::new(hasher.clone(), file_contents.clone());
+    let tree = MerkleTree::from_paths(hasher.clone(), filenames);
     let proofer = DefaultProofer::new(hasher, tree.leaves());
     let proof = proofer.generate(0).expect("Couldn't generate proof");
 
-    assert!(tree.root().hash() == root_hash);
-    assert!(proofer.verify(&proof, std::fs::read(&filenames[0]).unwrap(), tree.root().hash()));
+    assert!(*tree.root().hash() == *hex::decode(root_hash).unwrap());
+    assert!(proofer.verify(&proof, file_0, tree.root().hash()));
 }
 ```
 
@@ -72,9 +64,15 @@ use mt_rs::hasher::Hasher;
 pub struct FooHasher;
 
 impl Hasher for FooHasher {
-    fn hash(&self, input: &[u8]) -> String {
+    fn hash(&self, input: &[u8]) -> [u8; 32] {
         let sum: u32 = input.iter().map(|&b| b as u32).sum();
-        format!("foo_{:x}", sum)
+        let bytes = Vec::<u8>::from_hex(&format!("{:x}", sum)).unwrap_or_default();
+        let mut hash_array: [u8; 32] = [0; 32];
+
+        let len = bytes.len();
+        hash_array[..len].copy_from_slice(&bytes);
+
+        hash_array
     }
 }
 ```
@@ -94,7 +92,7 @@ where
         // ...
     }
 
-    fn verify<T>(&self, proof: &MerkleProof, data: T, root_hash: &str) -> bool
+    fn verify<T>(&self, proof: &MerkleProof, data: T, root_hash: &[u8]) -> bool
     where
         T: AsRef<[u8]>,
     {
@@ -110,10 +108,10 @@ let hasher = FooHasher;
 let data: &[&[u8]; ...] = ...;
 let tree = MerkleTree::new(hasher.clone(), data);
 
-println!("{}", tree.root().hash());
+println!("{:?}", tree.root().hash());
 
 
-let proofer = FooProofer::new(hasher, tree.leaves().clone());
+let proofer = FooProofer::new(hasher, tree.leaves());
 
 let proof = proofer.generate(0).unwrap();
 assert!(proofer.verify(&proof, data[0], tree.root().hash()));

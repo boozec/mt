@@ -1,3 +1,4 @@
+use hex::ToHex;
 use mt_rs::{hasher::Blake3Hasher, merkletree::MerkleTree};
 
 fn main() {
@@ -14,5 +15,5 @@ fn main() {
 
     let tree = MerkleTree::from_paths(hasher, filenames);
 
-    println!("{}", tree.root().hash());
+    println!("{}", tree.root().hash().encode_hex::<String>());
 }

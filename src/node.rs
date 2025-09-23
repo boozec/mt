@@ -10,7 +10,7 @@ pub enum NodeChildType {
 }
 
 /// Enum representing the type of a Merkle tree node.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum NodeStatus {
     /// A leaf node that contains no children.
     Leaf,
@@ -37,10 +37,10 @@ impl NodeStatus {
 }
 
 /// Represents a node in a Merkle tree, either leaf or internal.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Node {
     /// Hash value stored at the node.
-    hash: String,
+    hash: [u8; 32],
     /// Type of the node: leaf or internal.
     status: NodeStatus,
 }
@@ -51,7 +51,7 @@ impl Node {
     /// # Arguments
     ///
     /// * `hasher` - A reference to a hashing strategy.
-    pub fn new_leaf(hash: String) -> Self {
+    pub fn new_leaf(hash: [u8; 32]) -> Self {
         Self {
             hash,
             status: NodeStatus::Leaf,
@@ -69,7 +69,7 @@ impl Node {
     /// # Behavior
     ///
     /// The internal node hash is computed as the hash of the concatenated children's hashes.
-    pub fn new_internal(hash: String, left: Node, right: Node) -> Self {
+    pub fn new_internal(hash: [u8; 32], left: Node, right: Node) -> Self {
         Self {
             hash,
             status: NodeStatus::Internal(Box::new(left), Box::new(right)),
@@ -77,7 +77,7 @@ impl Node {
     }
 
     /// Returns a reference to the hash of the node.
-    pub fn hash(&self) -> &str {
+    pub fn hash(&self) -> &[u8; 32] {
         &self.hash
     }
 
