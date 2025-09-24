@@ -67,12 +67,11 @@ impl MerkleTree {
     }
 
     /// Constructs the internal nodes of the tree from the leaves upward and computes the root.
-    fn build<H>(hasher: H, nodes: Vec<Node>) -> Self
+    fn build<H>(hasher: H, leaves: Vec<Node>) -> Self
     where
         H: Hasher + 'static + std::marker::Sync,
     {
-        let leaves = nodes.clone();
-        let mut current_level = nodes;
+        let mut current_level = leaves.clone();
         let mut next_level = Vec::with_capacity((current_level.len() + 1) / 2);
         let mut height = 0;
 
