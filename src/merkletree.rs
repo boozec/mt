@@ -67,49 +67,37 @@ impl MerkleTree {
     }
 
     /// Constructs the internal nodes of the tree from the leaves upward and computes the root.
-    fn build<H>(hasher: H, leaves: Vec<Node>) -> Self
+    fn build<H>(hasher: H, mut leaves: Vec<Node>) -> Self
     where
         H: Hasher + 'static + std::marker::Sync,
     {
-        let mut current_level = leaves.clone();
-        let mut next_level = Vec::with_capacity((current_level.len() + 1) / 2);
-        let mut height = 0;
+        let original_leaves = leaves.clone();
+        let mut height = 1;
 
-        while current_level.len() > 1 {
-            if current_level.len() % 2 != 0 {
-                // duplicate last node to make the count even
-                current_level.push(current_level.last().unwrap().clone());
+        while leaves.len() > 1 {
+            if leaves.len() % 2 != 0 {
+                leaves.push(leaves.last().unwrap().clone());
             }
 
-            next_level.clear();
-            next_level = current_level
+            leaves = leaves
                 .par_chunks(2)
                 .map(|pair| {
-                    let (left, right) = (&pair[0], &pair[1]);
-
-                    let (left_hash, right_hash) = (left.hash().as_bytes(), right.hash().as_bytes());
-
-                    let mut buffer = Vec::with_capacity(left_hash.len() + right_hash.len());
-                    buffer.extend_from_slice(left_hash);
-                    buffer.extend_from_slice(right_hash);
-
-                    let hash = hasher.hash(&buffer);
-                    Node::new_internal(hash, left.clone(), right.clone())
+                    let combined = [pair[0].hash().as_bytes(), pair[1].hash().as_bytes()].concat();
+                    let hash = hasher.hash(&combined);
+                    Node::new_internal(hash, pair[0].clone(), pair[1].clone())
                 })
                 .collect();
 
-            std::mem::swap(&mut current_level, &mut next_level);
             height += 1;
         }
 
-        let root = current_level.remove(0);
-
         MerkleTree {
-            leaves,
-            height: height + 1,
-            root,
+            leaves: original_leaves,
+            height,
+            root: leaves.into_iter().next().expect("root not found"),
         }
     }
+
     /// Returns the height (number of levels) of the tree.
     pub fn height(&self) -> usize {
         self.height
